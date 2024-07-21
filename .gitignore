@@ -11,3 +11,9 @@ __pycache__
 *.pyd
 key-logger
 key-logger/*
+
+# Build
+build
+dist
+*.log
+main.spec

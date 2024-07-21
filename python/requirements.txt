@@ -1,4 +1,15 @@
+altgraph==0.17.4
+certifi==2024.7.4
+charset-normalizer==3.3.2
 evdev==1.7.1
+idna==3.7
+packaging==24.1
+pyinstaller==6.9.0
+pyinstaller-hooks-contrib==2024.7
 pynput==1.7.7
 python-xlib==0.33
+requests==2.32.3
+schedule==1.2.2
+setuptools==71.0.4
 six==1.16.0
+urllib3==2.2.2
